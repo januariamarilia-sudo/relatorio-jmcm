@@ -7,277 +7,228 @@ import streamlit as st
 from app import generate_report, read_defaults
 
 
-st.set_page_config(
-    page_title="Relatorio JMCM",
-    page_icon="DOC",
-    layout="wide",
-)
-
+st.set_page_config(page_title="Relatorio JMCM", layout="wide")
 st.title("Relatorio JMCM")
 
 defaults = read_defaults()
 
-PRIORIDADES = ["", "Alta", "Media", "Média", "media", "média", "Baixa", "Urgente", "urgente"]
-STATUS_OPCOES = [
+PRIORIDADES = ["", "Alta", "Media", "Baixa", "Urgente"]
+STATUS = [
     "",
     "Nao iniciada",
-    "Não iniciada",
     "Em andamento",
     "Paralisado",
     "Concluido",
-    "Concluído",
     "Parcialmente concluido",
-    "Parcialmente concluído",
     "Aguardando outro setor",
     "Aguardando assinatura",
     "Aguardando documentos",
     "Aguardando publicacao",
-    "Aguardando publicação",
 ]
 
 
-def default_rows(rows, columns):
-    normalized = []
-    for row in rows:
-        normalized.append({column: row.get(column, "") for column in columns})
-    return normalized or [{column: "" for column in columns}]
+def init_state():
+    st.session_state.setdefault("planning_count", max(5, len(defaults.get("planning", []))))
+    st.session_state.setdefault("extra_count", 3)
+    st.session_state.setdefault("done_count", 3)
 
 
-def with_status_helpers(rows, columns):
-    prepared = []
-    for row in rows:
-        item = {column: row.get(column, "") for column in columns}
-        status = item.pop("status", "")
-        item["status_rapido"] = status if status in STATUS_OPCOES else ""
-        item["status_livre"] = "" if status in STATUS_OPCOES else status
-        prepared.append(item)
-    return prepared or [{column: "" for column in columns if column != "status"} | {"status_rapido": "", "status_livre": ""}]
+def text_value(name, default=""):
+    return "" if default is None else str(default)
 
 
-def clean_rows(rows):
-    cleaned = []
-    for row in rows:
-        item = {key: "" if value is None else str(value).strip() for key, value in row.items()}
-        if any(item.values()):
-            cleaned.append(item)
-    return cleaned
+def select_index(options, value):
+    value = text_value("", value).strip()
+    return options.index(value) if value in options else 0
 
 
-def final_status(row):
-    livre = str(row.get("status_livre", "") or "").strip()
-    rapido = str(row.get("status_rapido", "") or "").strip()
+def status_value(prefix, index):
+    livre = st.session_state.get(f"{prefix}_status_livre_{index}", "").strip()
+    rapido = st.session_state.get(f"{prefix}_status_{index}", "").strip()
     return livre or rapido
 
 
-def finalize_planning(rows):
-    finalized = []
-    for row in clean_rows(rows):
-        finalized.append(
-            {
-                "processo": row.get("processo", ""),
-                "descricao": row.get("descricao", ""),
-                "prioridade": row.get("prioridade", ""),
-                "status": final_status(row),
-            }
-        )
-    return finalized
-
-
-def finalize_extra(rows):
-    finalized = []
-    for row in clean_rows(rows):
-        finalized.append(
-            {
-                "processo": row.get("processo", ""),
-                "descricao": row.get("descricao", ""),
-                "prazo": row.get("prazo", ""),
-                "prioridade": row.get("prioridade", ""),
-                "status": final_status(row),
-            }
-        )
-    return finalized
+def clean(rows):
+    cleaned = []
+    for row in rows:
+        if any(str(value).strip() for value in row.values()):
+            cleaned.append(row)
+    return cleaned
 
 
 def demand_options(planning_rows, extra_rows):
     options = []
-    for row in clean_rows(planning_rows) + clean_rows(extra_rows):
-        processo = str(row.get("processo", "") or "").strip()
+    for row in planning_rows + extra_rows:
+        processo = row.get("processo", "").strip()
         if processo and processo not in options:
             options.append(processo)
     return options
 
 
-def finalize_done(rows):
-    finalized = []
-    for row in clean_rows(rows):
-        processo_livre = row.get("processo_livre", "")
-        processo_origem = row.get("processo_origem", "")
-        finalized.append(
+def apply_done_prefill(rows):
+    st.session_state.done_count = max(3, len(rows))
+    for idx, row in enumerate(rows):
+        st.session_state[f"done_origem_{idx}"] = row.get("processo", "")
+        st.session_state[f"done_livre_{idx}"] = ""
+        st.session_state[f"done_atividade_{idx}"] = row.get("atividade", "")
+        st.session_state[f"done_tempo_{idx}"] = ""
+        st.session_state[f"done_status_{idx}"] = "Em andamento"
+        st.session_state[f"done_status_livre_{idx}"] = ""
+        st.session_state[f"done_obs_{idx}"] = ""
+
+
+def render_status(prefix, idx, default=""):
+    st.selectbox(
+        "Status rapido",
+        STATUS,
+        index=select_index(STATUS, default),
+        key=f"{prefix}_status_{idx}",
+    )
+    st.text_input("Status livre", key=f"{prefix}_status_livre_{idx}")
+
+
+def render_planning():
+    st.subheader("Planejamento semanal")
+    source = defaults.get("planning", [])
+    rows = []
+    for idx in range(st.session_state.planning_count):
+        base = source[idx] if idx < len(source) else {}
+        with st.expander(f"Planejamento {idx + 1}", expanded=idx < 3):
+            c1, c2 = st.columns([1, 1])
+            with c1:
+                processo = st.text_input(
+                    "Processo/assunto",
+                    value=text_value("processo", base.get("processo", "")),
+                    key=f"planning_processo_{idx}",
+                )
+                prioridade = st.selectbox(
+                    "Prioridade",
+                    PRIORIDADES,
+                    index=select_index(PRIORIDADES, base.get("prioridade", "")),
+                    key=f"planning_prioridade_{idx}",
+                )
+            with c2:
+                descricao = st.text_area(
+                    "Descricao resumida",
+                    value=text_value("descricao", base.get("descricao", "")),
+                    key=f"planning_descricao_{idx}",
+                    height=80,
+                )
+                render_status("planning", idx, base.get("status", ""))
+        rows.append(
             {
-                "processo": processo_livre or processo_origem,
-                "atividade": row.get("atividade", ""),
-                "tempo": row.get("tempo", ""),
-                "status": final_status(row),
-                "observacoes": row.get("observacoes", ""),
+                "processo": processo.strip(),
+                "descricao": descricao.strip(),
+                "prioridade": prioridade,
+                "status": status_value("planning", idx),
             }
         )
-    return finalized
+    if st.button("Adicionar planejamento"):
+        st.session_state.planning_count += 1
+        st.rerun()
+    return clean(rows)
 
 
-def rows_for_done_from_demands(planning_rows, extra_rows):
+def render_extra():
+    st.subheader("Demandas extraordinarias")
     rows = []
-    for row in clean_rows(planning_rows):
-        processo = str(row.get("processo", "") or "").strip()
-        if processo:
-            rows.append(
-                {
-                    "processo_origem": processo,
-                    "processo_livre": "",
-                    "atividade": row.get("descricao", ""),
-                    "tempo": "",
-                    "status_rapido": "Em andamento",
-                    "status_livre": "",
-                    "observacoes": "",
-                }
-            )
-    for row in clean_rows(extra_rows):
-        processo = str(row.get("processo", "") or "").strip()
-        if processo:
-            rows.append(
-                {
-                    "processo_origem": processo,
-                    "processo_livre": "",
-                    "atividade": row.get("descricao", ""),
-                    "tempo": "",
-                    "status_rapido": "Em andamento",
-                    "status_livre": "",
-                    "observacoes": "",
-                }
-            )
-    return rows or [
-        {
-            "processo_origem": "",
-            "processo_livre": "",
-            "atividade": "",
-            "tempo": "",
-            "status_rapido": "",
-            "status_livre": "",
-            "observacoes": "",
-        }
-    ]
+    for idx in range(st.session_state.extra_count):
+        with st.expander(f"Demanda extraordinaria {idx + 1}", expanded=idx < 2):
+            c1, c2 = st.columns([1, 1])
+            with c1:
+                processo = st.text_input("Processo/assunto", key=f"extra_processo_{idx}")
+                prazo = st.text_input("Prazo solicitado", key=f"extra_prazo_{idx}")
+                prioridade = st.selectbox("Prioridade", PRIORIDADES, key=f"extra_prioridade_{idx}")
+            with c2:
+                descricao = st.text_area("Descricao resumida", key=f"extra_descricao_{idx}", height=80)
+                render_status("extra", idx)
+        rows.append(
+            {
+                "processo": processo.strip(),
+                "descricao": descricao.strip(),
+                "prazo": prazo.strip(),
+                "prioridade": prioridade,
+                "status": status_value("extra", idx),
+            }
+        )
+    if st.button("Adicionar demanda extraordinaria"):
+        st.session_state.extra_count += 1
+        st.rerun()
+    return clean(rows)
 
 
-if "planning_data" not in st.session_state:
-    st.session_state.planning_data = with_status_helpers(
-        defaults.get("planning", []),
-        ["processo", "descricao", "prioridade", "status"],
-    )
-if "extra_data" not in st.session_state:
-    st.session_state.extra_data = with_status_helpers(
-        defaults.get("extra", []),
-        ["processo", "descricao", "prazo", "prioridade", "status"],
-    )
-if "done_data" not in st.session_state:
-    st.session_state.done_data = [
-        {
-            "processo_origem": "",
-            "processo_livre": "",
-            "atividade": "",
-            "tempo": "",
-            "status_rapido": "",
-            "status_livre": "",
-            "observacoes": "",
-        }
-    ]
+def render_done(planning_rows, extra_rows):
+    st.subheader("Atividades executadas")
+    options = [""] + demand_options(planning_rows, extra_rows)
 
+    if st.button("Puxar planejamento e demandas para executadas"):
+        rows = []
+        for row in planning_rows + extra_rows:
+            if row.get("processo"):
+                rows.append({"processo": row["processo"], "atividade": row.get("descricao", "")})
+        apply_done_prefill(rows)
+        st.rerun()
+
+    rows = []
+    for idx in range(st.session_state.done_count):
+        with st.expander(f"Atividade executada {idx + 1}", expanded=idx < 3):
+            c1, c2 = st.columns([1, 1])
+            with c1:
+                origem = st.selectbox(
+                    "Processo ja listado",
+                    options,
+                    key=f"done_origem_{idx}",
+                )
+                livre = st.text_input("Processo livre", key=f"done_livre_{idx}")
+                tempo = st.text_input("Tempo aproximado", key=f"done_tempo_{idx}")
+            with c2:
+                atividade = st.text_area("Atividade realizada", key=f"done_atividade_{idx}", height=80)
+                render_status("done", idx)
+                obs = st.text_area("Observacoes", key=f"done_obs_{idx}", height=80)
+        rows.append(
+            {
+                "processo": livre.strip() or origem.strip(),
+                "atividade": atividade.strip(),
+                "tempo": tempo.strip(),
+                "status": status_value("done", idx),
+                "observacoes": obs.strip(),
+            }
+        )
+    if st.button("Adicionar atividade executada"):
+        st.session_state.done_count += 1
+        st.rerun()
+    return clean(rows)
+
+
+init_state()
 
 st.subheader("Identificacao")
-col1, col2, col3 = st.columns(3)
-with col1:
+c1, c2, c3 = st.columns(3)
+with c1:
     data = st.text_input("Data ou periodo", value=defaults["identity"].get("data", ""))
     setor = st.text_input("Setor/Nucleo", value=defaults["identity"].get("setor", ""))
-with col2:
+with c2:
     colaborador = st.text_input("Colaborador(a)", value=defaults["identity"].get("colaborador", ""))
     funcao = st.text_input("Funcao", value=defaults["identity"].get("funcao", ""))
-with col3:
+with c3:
     horario = st.text_input("Horario de trabalho", value=defaults["identity"].get("horario", ""))
     responsavel = st.text_input("Responsavel pela validacao", value=defaults["identity"].get("responsavel", ""))
 
-st.subheader("Planejamento semanal")
-planning = st.data_editor(
-    st.session_state.planning_data,
-    num_rows="dynamic",
-    use_container_width=True,
-    column_config={
-        "processo": "Processo/assunto",
-        "descricao": "Descricao resumida",
-        "prioridade": st.column_config.SelectboxColumn("Prioridade", options=PRIORIDADES),
-        "status_rapido": st.column_config.SelectboxColumn("Status rapido", options=STATUS_OPCOES),
-        "status_livre": "Status livre",
-    },
-    key="planning_editor",
-)
-st.session_state.planning_data = planning
-
-st.subheader("Demandas extraordinarias")
-extra = st.data_editor(
-    st.session_state.extra_data,
-    num_rows="dynamic",
-    use_container_width=True,
-    column_config={
-        "processo": "Processo/assunto",
-        "descricao": "Descricao resumida",
-        "prazo": "Prazo solicitado",
-        "prioridade": st.column_config.SelectboxColumn("Prioridade", options=PRIORIDADES),
-        "status_rapido": st.column_config.SelectboxColumn("Status rapido", options=STATUS_OPCOES),
-        "status_livre": "Status livre",
-    },
-    key="extra_editor",
-)
-st.session_state.extra_data = extra
-
-options = demand_options(planning, extra)
-
-st.subheader("Atividades executadas")
-col_copy, col_hint = st.columns([1, 3])
-with col_copy:
-    if st.button("Puxar demandas para executadas", type="secondary"):
-        st.session_state.done_data = rows_for_done_from_demands(planning, extra)
-        st.rerun()
-with col_hint:
-    st.caption("Use 'Processo ja listado' para escolher uma demanda do planejamento/extraordinarias, ou preencha 'Processo livre' para digitar outro.")
-
-done = st.data_editor(
-    st.session_state.done_data,
-    num_rows="dynamic",
-    use_container_width=True,
-    column_config={
-        "processo_origem": st.column_config.SelectboxColumn(
-            "Processo ja listado",
-            options=[""] + options,
-        ),
-        "processo_livre": "Processo livre",
-        "atividade": "Atividade realizada",
-        "tempo": "Tempo aproximado",
-        "status_rapido": st.column_config.SelectboxColumn("Status rapido", options=STATUS_OPCOES),
-        "status_livre": "Status livre",
-        "observacoes": "Observacoes",
-    },
-    key="done_editor",
-)
-st.session_state.done_data = done
+planning_rows = render_planning()
+extra_rows = render_extra()
+done_rows = render_done(planning_rows, extra_rows)
 
 st.subheader("Indicadores qualitativos")
-c1, c2, c3 = st.columns(3)
-with c1:
+i1, i2, i3 = st.columns(3)
+with i1:
     produtividade = st.selectbox("Nivel de produtividade percebido", ["Alto", "Medio", "Baixo"], index=0)
     urgente = st.selectbox("Houve demanda urgente nao planejada?", ["Sim", "Nao"], index=0)
     urgente_comentario = st.text_input("Comentario sobre demanda urgente")
-with c2:
+with i2:
     cumprimento = st.selectbox("Cumprimento das atividades planejadas", ["Sim", "Parcialmente", "Nao"], index=1)
     dependencia = st.selectbox("Houve dependencia de outro setor?", ["Sim", "Nao"], index=0)
     dependencia_comentario = st.text_input("Qual dependencia?")
-with c3:
+with i3:
     retrabalho = st.selectbox("Houve retrabalho?", ["Sim", "Nao"], index=0)
     retrabalho_comentario = st.text_input("Motivo do retrabalho")
     sobrecarga = st.selectbox("Houve sobrecarga de demandas?", ["Sim", "Nao"], index=0)
@@ -300,9 +251,9 @@ if st.button("Gerar relatorio Word", type="primary"):
             "horario": horario,
             "responsavel": responsavel,
         },
-        "planning": finalize_planning(planning),
-        "extra": finalize_extra(extra),
-        "done": finalize_done(done),
+        "planning": planning_rows,
+        "extra": extra_rows,
+        "done": done_rows,
         "indicators": {
             "produtividade": produtividade,
             "cumprimento": cumprimento,
