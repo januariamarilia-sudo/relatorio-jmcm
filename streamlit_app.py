@@ -66,6 +66,23 @@ def row_title(prefix, index, label, default="", *extra_keys):
     return f"{label} {index + 1}: {title}{suffix}"
 
 
+def render_removed_items(prefix, label, count, source=None):
+    source = source or []
+    removed = []
+    for idx in range(count):
+        if st.session_state.get(f"{prefix}_excluir_{idx}", False):
+            base = source[idx] if idx < len(source) else {}
+            title = row_title(prefix, idx, label, base.get("processo", ""))
+            removed.append((idx, title.replace(" - removido desta vez", "")))
+    if not removed:
+        return
+    with st.expander("Itens removidos nesta vez", expanded=False):
+        for idx, title in removed:
+            if st.button(f"Restaurar {title}", key=f"{prefix}_restaurar_{idx}"):
+                st.session_state[f"{prefix}_excluir_{idx}"] = False
+                st.rerun()
+
+
 def clean(rows):
     cleaned = []
     for row in rows:
@@ -151,6 +168,8 @@ def render_planning():
     rows = []
     for idx in range(st.session_state.planning_count):
         base = source[idx] if idx < len(source) else {}
+        if st.session_state.get(f"planning_excluir_{idx}", False):
+            continue
         with st.expander(
             row_title("planning", idx, "Planejamento", base.get("processo", "")),
             expanded=idx < 3,
@@ -189,6 +208,7 @@ def render_planning():
     if st.button("Adicionar planejamento"):
         st.session_state.planning_count += 1
         st.rerun()
+    render_removed_items("planning", "Planejamento", st.session_state.planning_count, source)
     return clean(rows)
 
 
@@ -196,6 +216,8 @@ def render_extra():
     st.subheader("Demandas extraordinarias")
     rows = []
     for idx in range(st.session_state.extra_count):
+        if st.session_state.get(f"extra_excluir_{idx}", False):
+            continue
         with st.expander(row_title("extra", idx, "Demanda extraordinaria"), expanded=idx < 2):
             excluir = st.checkbox("X Remover esta demanda deste relatorio", key=f"extra_excluir_{idx}")
             c1, c2 = st.columns([1, 1])
@@ -219,6 +241,7 @@ def render_extra():
     if st.button("Adicionar demanda extraordinaria"):
         st.session_state.extra_count += 1
         st.rerun()
+    render_removed_items("extra", "Demanda extraordinaria", st.session_state.extra_count)
     return clean(rows)
 
 
@@ -236,6 +259,8 @@ def render_done(planning_rows, extra_rows):
 
     rows = []
     for idx in range(st.session_state.done_count):
+        if st.session_state.get(f"done_excluir_{idx}", False):
+            continue
         with st.expander(
             row_title(
                 "done",
@@ -274,6 +299,7 @@ def render_done(planning_rows, extra_rows):
     if st.button("Adicionar atividade executada"):
         st.session_state.done_count += 1
         st.rerun()
+    render_removed_items("done", "Atividade executada", st.session_state.done_count)
     return clean(rows)
 
 
