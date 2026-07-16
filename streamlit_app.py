@@ -51,6 +51,7 @@ def inject_design():
                 radial-gradient(circle at top right, rgba(47, 57, 192, 0.11), transparent 30rem),
                 linear-gradient(180deg, #f7f8ff 0%, #ffffff 34rem);
             color: var(--icismep-ink);
+            -webkit-text-size-adjust: 100%;
         }
 
         .block-container {
@@ -155,11 +156,16 @@ def inject_design():
             letter-spacing: 0;
         }
 
+        div[data-testid="stVerticalBlock"] {
+            gap: 0.8rem;
+        }
+
         div[data-testid="stExpander"] details {
             border: 1px solid var(--icismep-line);
             border-radius: 12px;
             background: #ffffff;
             box-shadow: 0 6px 20px rgba(47, 57, 192, 0.06);
+            margin-bottom: 8px;
         }
 
         div[data-testid="stExpander"] summary {
@@ -167,6 +173,7 @@ def inject_design():
             border-radius: 12px;
             color: var(--icismep-blue-dark);
             font-weight: 700;
+            min-height: 42px;
         }
 
         .stButton > button {
@@ -233,58 +240,130 @@ def inject_design():
         }
 
         @media (max-width: 720px) {
+            html {
+                scroll-padding-top: 10px;
+            }
+
             .block-container {
-                padding-top: 0.9rem;
-                padding-left: 0.75rem;
-                padding-right: 0.75rem;
+                padding-top: 0.45rem;
+                padding-left: 0.65rem;
+                padding-right: 0.65rem;
+                padding-bottom: 1.5rem;
             }
 
             .jmcm-hero {
-                border-radius: 16px;
-                padding: 20px 18px;
-                margin-bottom: 18px;
+                border-radius: 14px;
+                padding: 14px 15px;
+                margin-bottom: 12px;
+                box-shadow: 0 10px 24px rgba(32, 41, 153, 0.17);
             }
 
             .jmcm-hero::after {
-                right: -110px;
-                top: -120px;
-                width: 240px;
-                height: 240px;
+                right: -120px;
+                top: -138px;
+                width: 220px;
+                height: 220px;
             }
 
             .jmcm-brand {
-                font-size: 0.82rem;
-                margin-bottom: 14px;
+                font-size: 0.76rem;
+                margin-bottom: 8px;
+                gap: 8px;
+            }
+
+            .jmcm-logo-mark {
+                grid-template-columns: 10px 18px 18px;
+                gap: 3px;
+                height: 18px;
+            }
+
+            .jmcm-logo-mark span:first-child {
+                height: 7px;
+            }
+
+            .jmcm-logo-mark span:nth-child(2) { height: 14px; }
+            .jmcm-logo-mark span:nth-child(3) { height: 18px; }
+
+            .jmcm-logo-mark span {
+                border-radius: 2px 2px 0 0;
             }
 
             .jmcm-hero h1 {
-                font-size: 2rem;
+                font-size: 1.55rem;
+                line-height: 1.1;
             }
 
             .jmcm-hero p {
-                font-size: 0.96rem;
+                font-size: 0.86rem;
+                line-height: 1.35;
+                margin-top: 8px;
             }
 
-            .jmcm-pill {
-                width: 100%;
-                text-align: center;
+            .jmcm-status-strip {
+                display: none;
+            }
+
+            h2, h3 {
+                font-size: 1.22rem !important;
+                margin-top: 0.45rem !important;
+                margin-bottom: 0.35rem !important;
             }
 
             .stButton > button,
             div[data-testid="stDownloadButton"] button {
                 width: 100%;
-                min-height: 48px;
+                min-height: 44px;
+                padding: 0.45rem 0.7rem;
+                border-radius: 9px;
             }
 
             div[data-testid="stTextInput"] input,
             div[data-testid="stTextArea"] textarea,
             div[data-baseweb="select"] > div {
                 font-size: 16px;
+                min-height: 42px;
+                border-radius: 9px;
+            }
+
+            div[data-testid="stTextArea"] textarea {
+                min-height: 88px;
+            }
+
+            label, div[data-testid="stWidgetLabel"] {
+                font-size: 0.86rem !important;
+            }
+
+            div[data-testid="stExpander"] details {
+                border-radius: 10px;
+                margin-bottom: 7px;
+                box-shadow: 0 4px 12px rgba(47, 57, 192, 0.045);
+            }
+
+            div[data-testid="stExpander"] summary {
+                min-height: 39px;
+                font-size: 0.9rem;
+                padding-top: 0.45rem !important;
+                padding-bottom: 0.45rem !important;
+            }
+
+            .iphone-card {
+                padding: 12px 13px;
+                margin: -2px 0 12px;
+                border-radius: 11px;
+                font-size: 0.92rem;
             }
 
             div[data-testid="column"] {
                 width: 100% !important;
                 flex: 1 1 100% !important;
+            }
+
+            div[data-testid="stVerticalBlock"] {
+                gap: 0.48rem;
+            }
+
+            div[data-testid="stHorizontalBlock"] {
+                gap: 0.48rem;
             }
         }
         </style>
