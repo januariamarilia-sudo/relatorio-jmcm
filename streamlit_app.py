@@ -245,16 +245,16 @@ def inject_design():
             }
 
             .block-container {
-                padding-top: 0.45rem;
-                padding-left: 0.65rem;
-                padding-right: 0.65rem;
-                padding-bottom: 1.5rem;
+                padding-top: 0.7rem;
+                padding-left: 0.85rem;
+                padding-right: 0.85rem;
+                padding-bottom: 1.8rem;
             }
 
             .jmcm-hero {
                 border-radius: 14px;
-                padding: 14px 15px;
-                margin-bottom: 12px;
+                padding: 16px 16px;
+                margin-bottom: 15px;
                 box-shadow: 0 10px 24px rgba(32, 41, 153, 0.17);
             }
 
@@ -304,9 +304,17 @@ def inject_design():
             }
 
             h2, h3 {
-                font-size: 1.22rem !important;
-                margin-top: 0.45rem !important;
-                margin-bottom: 0.35rem !important;
+                display: block !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                overflow: visible !important;
+                white-space: normal !important;
+                overflow-wrap: anywhere !important;
+                text-overflow: clip !important;
+                font-size: 1.28rem !important;
+                line-height: 1.25 !important;
+                margin-top: 0.85rem !important;
+                margin-bottom: 0.55rem !important;
             }
 
             .stButton > button,
@@ -331,6 +339,10 @@ def inject_design():
 
             label, div[data-testid="stWidgetLabel"] {
                 font-size: 0.86rem !important;
+                line-height: 1.25 !important;
+                white-space: normal !important;
+                overflow: visible !important;
+                text-overflow: clip !important;
             }
 
             div[data-testid="stExpander"] details {
@@ -340,10 +352,14 @@ def inject_design():
             }
 
             div[data-testid="stExpander"] summary {
-                min-height: 39px;
-                font-size: 0.9rem;
-                padding-top: 0.45rem !important;
-                padding-bottom: 0.45rem !important;
+                min-height: 44px;
+                font-size: 0.94rem;
+                line-height: 1.25;
+                white-space: normal !important;
+                overflow: visible !important;
+                text-overflow: clip !important;
+                padding-top: 0.55rem !important;
+                padding-bottom: 0.55rem !important;
             }
 
             .iphone-card {
@@ -353,17 +369,13 @@ def inject_design():
                 font-size: 0.92rem;
             }
 
-            div[data-testid="column"] {
-                width: 100% !important;
-                flex: 1 1 100% !important;
-            }
-
             div[data-testid="stVerticalBlock"] {
-                gap: 0.48rem;
+                gap: 0.62rem;
             }
 
             div[data-testid="stHorizontalBlock"] {
-                gap: 0.48rem;
+                gap: 0.62rem;
+                flex-wrap: wrap;
             }
         }
         </style>
