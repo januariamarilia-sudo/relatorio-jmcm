@@ -409,6 +409,7 @@ def inject_design():
 
 
 def render_header():
+    code_pill = "" if DRAFT_CODE == "principal" else f'<span class="jmcm-pill">Copia: {DRAFT_CODE}</span>'
     st.markdown(
         f"""
         <section class="jmcm-hero">
@@ -422,7 +423,7 @@ def render_header():
                 <span class="jmcm-pill">Rascunho salvo</span>
                 <span class="jmcm-pill">Planejamento permanente</span>
                 <span class="jmcm-pill">Atividades diarias protegidas</span>
-                <span class="jmcm-pill">Codigo: {DRAFT_CODE}</span>
+                {code_pill}
             </div>
         </section>
         """,
@@ -431,6 +432,8 @@ def render_header():
 
 
 def render_profile_links():
+    if DRAFT_CODE == "principal":
+        return
     links = "\n".join(
         f"- [{code}]({BASE_URL}?codigo={code})"
         for code in PROFILE_CODES
