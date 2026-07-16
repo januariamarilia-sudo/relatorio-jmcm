@@ -9,7 +9,7 @@ import streamlit as st
 from app import generate_report, read_defaults
 
 
-st.set_page_config(page_title="Relatorio JMCM", layout="wide")
+st.set_page_config(page_title="Gerador de Relatorios", layout="wide")
 
 defaults = read_defaults()
 SAVE_PATH = Path(__file__).with_name("relatorio_salvo.json")
@@ -222,9 +222,9 @@ def render_header():
         <section class="jmcm-hero">
             <div class="jmcm-brand">
                 <span class="jmcm-logo-mark"><span></span><span></span><span></span></span>
-                ICISMEP | Consorcio Publico
+                Sistema de Relatorios
             </div>
-            <h1>Relatorio JMCM</h1>
+            <h1>Gerador de Relatorios</h1>
             <p>Rascunho continuo para planejamento semanal, demandas extraordinarias e atividades executadas, com geracao em Word.</p>
             <div class="jmcm-status-strip">
                 <span class="jmcm-pill">Rascunho salvo</span>
@@ -675,7 +675,7 @@ def render_planning():
         ensure_planning_row(idx)
         if st.session_state.get(f"planning_excluir_{idx}", False):
             continue
-        with st.expander(row_title("planning", idx, "Planejamento"), expanded=idx < 3):
+        with st.expander(row_title("planning", idx, "Planejamento"), expanded=False):
             excluir = st.checkbox("X Remover este planejamento deste relatorio", key=f"planning_excluir_{idx}")
             c1, c2 = st.columns([1, 1])
             with c1:
@@ -699,7 +699,7 @@ def render_extra():
         ensure_extra_row(idx)
         if st.session_state.get(f"extra_excluir_{idx}", False):
             continue
-        with st.expander(row_title("extra", idx, "Demanda extraordinaria"), expanded=idx < 2):
+        with st.expander(row_title("extra", idx, "Demanda extraordinaria"), expanded=False):
             excluir = st.checkbox("X Remover esta demanda deste relatorio", key=f"extra_excluir_{idx}")
             c1, c2 = st.columns([1, 1])
             with c1:
@@ -782,7 +782,7 @@ def render_done(planning_rows, extra_rows):
             continue
         current_origin = st.session_state.get(f"done_origem_{idx}", "")
         row_options = options if not current_origin or current_origin in options else options + [current_origin]
-        with st.expander(row_title("done", idx, "Atividade executada", f"done_livre_{idx}", f"done_origem_{idx}"), expanded=idx < 3):
+        with st.expander(row_title("done", idx, "Atividade executada", f"done_livre_{idx}", f"done_origem_{idx}"), expanded=False):
             excluir = st.checkbox("X Remover esta atividade deste relatorio", key=f"done_excluir_{idx}")
             c1, c2 = st.columns([1, 1])
             with c1:
