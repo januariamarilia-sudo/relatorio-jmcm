@@ -435,6 +435,7 @@ def render_planning():
         if not excluir:
             rows.append({"processo": processo.strip(), "descricao": descricao.strip(), "prioridade": prioridade, "status": status_value("planning", idx)})
     if st.button("Adicionar planejamento"):
+        save_draft(current_draft())
         st.session_state.planning_count += 1
         st.rerun()
     render_removed_items("planning", "Planejamento", st.session_state.planning_count)
@@ -469,6 +470,7 @@ def render_extra():
                 }
             )
     if st.button("Adicionar demanda extraordinaria"):
+        save_draft(current_draft())
         st.session_state.extra_count += 1
         st.rerun()
     render_removed_items("extra", "Demanda extraordinaria", st.session_state.extra_count)
@@ -484,17 +486,41 @@ def demand_options(planning_rows, extra_rows):
     return options
 
 
-def apply_done_prefill(rows):
-    st.session_state.done_count = max(2, len(rows))
+def apply_done_prefill(new_rows):
+    existing_rows = done_rows_from_state()
+    existing_processos = {
+        row.get("processo", "").strip().lower()
+        for row in existing_rows
+        if row.get("processo", "").strip()
+    }
+    merged_rows = list(existing_rows)
+
+    for row in new_rows:
+        processo = row.get("processo", "").strip()
+        if not processo or processo.lower() in existing_processos:
+            continue
+        merged_rows.append(
+            {
+                "processo": processo,
+                "atividade": row.get("atividade", ""),
+                "tempo": row.get("tempo", ""),
+                "status": row.get("status", "Em andamento"),
+                "observacoes": row.get("observacoes", ""),
+            }
+        )
+        existing_processos.add(processo.lower())
+
+    st.session_state.done_count = max(2, len(merged_rows))
     clear_item_fields("done")
-    for idx, row in enumerate(rows):
+
+    for idx, row in enumerate(merged_rows):
         st.session_state[f"done_excluir_{idx}"] = False
-        st.session_state[f"done_origem_{idx}"] = row.get("processo", "")
-        st.session_state[f"done_livre_{idx}"] = ""
+        st.session_state[f"done_origem_{idx}"] = ""
+        st.session_state[f"done_livre_{idx}"] = row.get("processo", "")
         st.session_state[f"done_atividade_{idx}"] = row.get("atividade", "")
-        st.session_state[f"done_tempo_{idx}"] = ""
+        st.session_state[f"done_tempo_{idx}"] = row.get("tempo", "")
         set_status("done", idx, row.get("status", "Em andamento"))
-        st.session_state[f"done_obs_{idx}"] = ""
+        st.session_state[f"done_obs_{idx}"] = row.get("observacoes", "")
 
 
 def render_done(planning_rows, extra_rows):
@@ -502,6 +528,7 @@ def render_done(planning_rows, extra_rows):
     options = [""] + demand_options(planning_rows, extra_rows)
 
     if st.button("Puxar planejamento e demandas para executadas"):
+        save_draft(current_draft())
         rows = []
         for row in planning_rows + extra_rows:
             if row.get("processo"):
@@ -538,6 +565,7 @@ def render_done(planning_rows, extra_rows):
                 }
             )
     if st.button("Adicionar atividade executada"):
+        save_draft(current_draft())
         st.session_state.done_count += 1
         st.rerun()
     render_removed_items("done", "Atividade executada", st.session_state.done_count)
