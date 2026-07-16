@@ -12,7 +12,31 @@ from app import generate_report, read_defaults
 st.set_page_config(page_title="Gerador de Relatorios", layout="wide")
 
 defaults = read_defaults()
-SAVE_PATH = Path(__file__).with_name("relatorio_salvo.json")
+BASE_URL = "https://relatorio-jmcm.streamlit.app/"
+PROFILE_CODES = ["bx", "hjh", "k7m", "n4p", "v9r"]
+
+
+def query_value(name, default=""):
+    try:
+        value = st.query_params.get(name, default)
+    except Exception:
+        value = st.experimental_get_query_params().get(name, [default])
+    if isinstance(value, list):
+        return value[0] if value else default
+    return value or default
+
+
+def safe_code(value):
+    code = "".join(ch for ch in ("" if value is None else str(value)).lower() if ch.isalnum() or ch in ("-", "_"))
+    return code[:24] or "principal"
+
+
+DRAFT_CODE = safe_code(query_value("codigo", "principal"))
+SAVE_PATH = (
+    Path(__file__).with_name("relatorio_salvo.json")
+    if DRAFT_CODE == "principal"
+    else Path(__file__).with_name(f"relatorio_salvo_{DRAFT_CODE}.json")
+)
 
 PRIORIDADES = ["", "Alta", "Media", "Baixa", "Urgente"]
 STATUS = [
@@ -386,7 +410,7 @@ def inject_design():
 
 def render_header():
     st.markdown(
-        """
+        f"""
         <section class="jmcm-hero">
             <div class="jmcm-brand">
                 <span class="jmcm-logo-mark"><span></span><span></span><span></span></span>
@@ -398,11 +422,25 @@ def render_header():
                 <span class="jmcm-pill">Rascunho salvo</span>
                 <span class="jmcm-pill">Planejamento permanente</span>
                 <span class="jmcm-pill">Atividades diarias protegidas</span>
+                <span class="jmcm-pill">Codigo: {DRAFT_CODE}</span>
             </div>
         </section>
         """,
         unsafe_allow_html=True,
     )
+
+
+def render_profile_links():
+    links = "\n".join(
+        f"- [{code}]({BASE_URL}?codigo={code})"
+        for code in PROFILE_CODES
+    )
+    with st.expander("Links separados", expanded=False):
+        st.markdown(
+            "Cada link abaixo tem rascunho separado. Envie um codigo para cada pessoa:\n\n"
+            f"{links}\n\n"
+            f"Link atual: `{BASE_URL}?codigo={DRAFT_CODE}`"
+        )
 
 
 def render_iphone_mode_hint():
@@ -992,6 +1030,7 @@ def render_done(planning_rows, extra_rows):
 
 inject_design()
 render_header()
+render_profile_links()
 render_iphone_mode_hint()
 init_state()
 render_draft_actions()
