@@ -57,6 +57,8 @@ def inject_design():
             max-width: 1180px;
             padding-top: 2rem;
             padding-bottom: 3rem;
+            padding-left: max(1rem, env(safe-area-inset-left));
+            padding-right: max(1rem, env(safe-area-inset-right));
         }
 
         .jmcm-hero {
@@ -210,6 +212,81 @@ def inject_design():
         .stCaption, caption, small {
             color: var(--icismep-muted);
         }
+
+        .iphone-card {
+            border: 1px solid var(--icismep-line);
+            border-radius: 14px;
+            padding: 16px 18px;
+            margin: -4px 0 22px;
+            background: rgba(255, 255, 255, 0.82);
+            box-shadow: 0 10px 28px rgba(47, 57, 192, 0.07);
+        }
+
+        .iphone-card strong {
+            color: var(--icismep-blue-dark);
+        }
+
+        .iphone-card p {
+            margin: 6px 0 0;
+            color: var(--icismep-muted);
+            line-height: 1.45;
+        }
+
+        @media (max-width: 720px) {
+            .block-container {
+                padding-top: 0.9rem;
+                padding-left: 0.75rem;
+                padding-right: 0.75rem;
+            }
+
+            .jmcm-hero {
+                border-radius: 16px;
+                padding: 20px 18px;
+                margin-bottom: 18px;
+            }
+
+            .jmcm-hero::after {
+                right: -110px;
+                top: -120px;
+                width: 240px;
+                height: 240px;
+            }
+
+            .jmcm-brand {
+                font-size: 0.82rem;
+                margin-bottom: 14px;
+            }
+
+            .jmcm-hero h1 {
+                font-size: 2rem;
+            }
+
+            .jmcm-hero p {
+                font-size: 0.96rem;
+            }
+
+            .jmcm-pill {
+                width: 100%;
+                text-align: center;
+            }
+
+            .stButton > button,
+            div[data-testid="stDownloadButton"] button {
+                width: 100%;
+                min-height: 48px;
+            }
+
+            div[data-testid="stTextInput"] input,
+            div[data-testid="stTextArea"] textarea,
+            div[data-baseweb="select"] > div {
+                font-size: 16px;
+            }
+
+            div[data-testid="column"] {
+                width: 100% !important;
+                flex: 1 1 100% !important;
+            }
+        }
         </style>
         """,
         unsafe_allow_html=True,
@@ -235,6 +312,19 @@ def render_header():
         """,
         unsafe_allow_html=True,
     )
+
+
+def render_iphone_mode_hint():
+    with st.expander("Usar no iPhone", expanded=False):
+        st.markdown(
+            """
+            <div class="iphone-card">
+                <strong>Para deixar como app na tela inicial:</strong>
+                <p>Abra este link no Safari do iPhone, toque em Compartilhar e escolha Adicionar à Tela de Início.</p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
 
 def text_value(value=""):
@@ -811,6 +901,7 @@ def render_done(planning_rows, extra_rows):
 
 inject_design()
 render_header()
+render_iphone_mode_hint()
 init_state()
 render_draft_actions()
 
