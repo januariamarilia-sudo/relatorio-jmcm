@@ -10,7 +10,6 @@ from app import generate_report, read_defaults
 
 
 st.set_page_config(page_title="Relatorio JMCM", layout="wide")
-st.title("Relatorio JMCM")
 
 defaults = read_defaults()
 SAVE_PATH = Path(__file__).with_name("relatorio_salvo.json")
@@ -31,6 +30,211 @@ STATUS = [
 PRODUTIVIDADE = ["Alto", "Medio", "Baixo"]
 CUMPRIMENTO = ["Sim", "Parcialmente", "Nao"]
 SIM_NAO = ["Sim", "Nao"]
+
+
+def inject_design():
+    st.markdown(
+        """
+        <style>
+        :root {
+            --icismep-blue: #2f39c0;
+            --icismep-blue-dark: #202999;
+            --icismep-red: #fa2946;
+            --icismep-soft: #f4f6ff;
+            --icismep-line: #dfe3f7;
+            --icismep-ink: #172033;
+            --icismep-muted: #5c6478;
+        }
+
+        .stApp {
+            background:
+                radial-gradient(circle at top right, rgba(47, 57, 192, 0.11), transparent 30rem),
+                linear-gradient(180deg, #f7f8ff 0%, #ffffff 34rem);
+            color: var(--icismep-ink);
+        }
+
+        .block-container {
+            max-width: 1180px;
+            padding-top: 2rem;
+            padding-bottom: 3rem;
+        }
+
+        .jmcm-hero {
+            position: relative;
+            overflow: hidden;
+            border-radius: 18px;
+            padding: 26px 30px;
+            margin-bottom: 22px;
+            color: #ffffff;
+            background: linear-gradient(135deg, var(--icismep-blue) 0%, var(--icismep-blue-dark) 100%);
+            box-shadow: 0 18px 45px rgba(32, 41, 153, 0.22);
+        }
+
+        .jmcm-hero::after {
+            content: "";
+            position: absolute;
+            right: -76px;
+            top: -92px;
+            width: 260px;
+            height: 260px;
+            background: rgba(255, 255, 255, 0.13);
+            transform: rotate(45deg);
+            border-radius: 20px;
+        }
+
+        .jmcm-brand {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 800;
+            font-size: 0.92rem;
+            letter-spacing: 0;
+            margin-bottom: 18px;
+            color: #ffffff;
+        }
+
+        .jmcm-logo-mark {
+            display: inline-grid;
+            grid-template-columns: 14px 24px 24px;
+            gap: 4px;
+            align-items: end;
+            height: 24px;
+        }
+
+        .jmcm-logo-mark span {
+            display: block;
+            border-radius: 3px 3px 0 0;
+            transform: skewX(28deg);
+            background: #ffffff;
+        }
+
+        .jmcm-logo-mark span:first-child {
+            height: 9px;
+            background: var(--icismep-red);
+        }
+
+        .jmcm-logo-mark span:nth-child(2) { height: 18px; }
+        .jmcm-logo-mark span:nth-child(3) { height: 24px; }
+
+        .jmcm-hero h1 {
+            margin: 0;
+            font-size: clamp(2rem, 4vw, 3.35rem);
+            line-height: 1.05;
+            font-weight: 850;
+            letter-spacing: 0;
+        }
+
+        .jmcm-hero p {
+            max-width: 760px;
+            margin: 12px 0 0;
+            font-size: 1.02rem;
+            line-height: 1.5;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .jmcm-status-strip {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .jmcm-pill {
+            border: 1px solid rgba(255,255,255,0.28);
+            background: rgba(255,255,255,0.13);
+            border-radius: 999px;
+            padding: 7px 12px;
+            font-size: 0.86rem;
+            color: #ffffff;
+        }
+
+        h2, h3 {
+            color: var(--icismep-ink);
+            letter-spacing: 0;
+        }
+
+        div[data-testid="stExpander"] details {
+            border: 1px solid var(--icismep-line);
+            border-radius: 12px;
+            background: #ffffff;
+            box-shadow: 0 6px 20px rgba(47, 57, 192, 0.06);
+        }
+
+        div[data-testid="stExpander"] summary {
+            background: linear-gradient(90deg, #ffffff, var(--icismep-soft));
+            border-radius: 12px;
+            color: var(--icismep-blue-dark);
+            font-weight: 700;
+        }
+
+        .stButton > button {
+            border-radius: 10px;
+            border-color: var(--icismep-line);
+            font-weight: 700;
+            min-height: 42px;
+        }
+
+        .stButton > button:hover {
+            border-color: var(--icismep-blue);
+            color: var(--icismep-blue-dark);
+        }
+
+        .stButton > button[kind="primary"],
+        div[data-testid="stDownloadButton"] button[kind="primary"] {
+            background: var(--icismep-blue);
+            border-color: var(--icismep-blue);
+            color: #ffffff;
+        }
+
+        .stButton > button[kind="primary"]:hover,
+        div[data-testid="stDownloadButton"] button[kind="primary"]:hover {
+            background: var(--icismep-blue-dark);
+            border-color: var(--icismep-blue-dark);
+            color: #ffffff;
+        }
+
+        div[data-testid="stTextInput"] input,
+        div[data-testid="stTextArea"] textarea,
+        div[data-baseweb="select"] > div {
+            border-radius: 10px;
+            border-color: var(--icismep-line);
+            background-color: #fbfcff;
+        }
+
+        div[data-testid="stTextInput"] input:focus,
+        div[data-testid="stTextArea"] textarea:focus {
+            border-color: var(--icismep-blue);
+            box-shadow: 0 0 0 1px var(--icismep-blue);
+        }
+
+        .stCaption, caption, small {
+            color: var(--icismep-muted);
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def render_header():
+    st.markdown(
+        """
+        <section class="jmcm-hero">
+            <div class="jmcm-brand">
+                <span class="jmcm-logo-mark"><span></span><span></span><span></span></span>
+                ICISMEP | Consorcio Publico
+            </div>
+            <h1>Relatorio JMCM</h1>
+            <p>Rascunho continuo para planejamento semanal, demandas extraordinarias e atividades executadas, com geracao em Word.</p>
+            <div class="jmcm-status-strip">
+                <span class="jmcm-pill">Rascunho salvo</span>
+                <span class="jmcm-pill">Planejamento permanente</span>
+                <span class="jmcm-pill">Atividades diarias protegidas</span>
+            </div>
+        </section>
+        """,
+        unsafe_allow_html=True,
+    )
 
 
 def text_value(value=""):
@@ -284,9 +488,9 @@ def render_removed_items(prefix, label, count):
                 st.rerun()
 
 
-def render_status(prefix, idx):
-    st.selectbox("Status rapido", STATUS, key=f"{prefix}_status_{idx}")
-    st.text_input("Status livre", key=f"{prefix}_status_livre_{idx}")
+def render_status(prefix, idx, on_change=None):
+    st.selectbox("Status rapido", STATUS, key=f"{prefix}_status_{idx}", on_change=on_change)
+    st.text_input("Status livre", key=f"{prefix}_status_livre_{idx}", on_change=on_change)
 
 
 def planning_rows_from_state():
@@ -343,10 +547,47 @@ def done_rows_from_state():
     return clean(rows)
 
 
+def write_done_rows(rows):
+    st.session_state.done_count = max(2, len(rows))
+    clear_item_fields("done")
+
+    for idx, row in enumerate(rows):
+        st.session_state[f"done_excluir_{idx}"] = False
+        st.session_state[f"done_origem_{idx}"] = ""
+        st.session_state[f"done_livre_{idx}"] = row.get("processo", "")
+        st.session_state[f"done_atividade_{idx}"] = row.get("atividade", "")
+        st.session_state[f"done_tempo_{idx}"] = row.get("tempo", "")
+        set_status("done", idx, row.get("status", "Em andamento"))
+        st.session_state[f"done_obs_{idx}"] = row.get("observacoes", "")
+
+
+def remember_done_rows():
+    rows = done_rows_from_state()
+    if rows:
+        st.session_state["_done_backup"] = rows
+
+
+def protect_done_rows():
+    remember_done_rows()
+    st.session_state["_restore_done_after_change"] = True
+
+
+def restore_done_rows_if_needed():
+    if not st.session_state.pop("_restore_done_after_change", False):
+        return
+    if done_rows_from_state():
+        return
+    backup = st.session_state.get("_done_backup", [])
+    if backup:
+        write_done_rows(backup)
+
+
 def current_draft():
     planning = planning_rows_from_state()
     extra = extra_rows_from_state()
     done = done_rows_from_state()
+    if not done and st.session_state.get("_restore_done_after_change", False):
+        done = st.session_state.get("_done_backup", [])
     return {
         "identity": {
             "data": st.session_state.get("identity_data", ""),
@@ -391,6 +632,15 @@ def save_and_reload(draft, message):
     st.rerun()
 
 
+def add_line_and_reload(count_key, message):
+    if count_key != "done_count":
+        protect_done_rows()
+    draft = current_draft()
+    current_count = int(st.session_state.get(count_key, 0))
+    draft["counts"][count_key] = max(int(draft["counts"].get(count_key, 0)), current_count) + 1
+    save_and_reload(draft, message)
+
+
 def render_draft_actions():
     st.subheader("Rascunho do relatorio")
     last_saved = st.session_state.get("last_saved_at", "")
@@ -408,11 +658,13 @@ def render_draft_actions():
             draft = current_draft()
             draft["done"] = []
             draft["counts"]["done_count"] = 2
+            st.session_state["_done_backup"] = []
             save_and_reload(draft, "Atividades diarias limpas. Planejamento e demandas foram mantidos.")
 
     with st.expander("Zerar relatorio"):
         confirmar = st.checkbox("Confirmo que quero deixar o relatorio todo em branco.")
         if st.button("Zerar tudo", disabled=not confirmar):
+            st.session_state["_done_backup"] = []
             save_and_reload(blank_draft(), "Relatorio zerado.")
 
 
@@ -427,17 +679,15 @@ def render_planning():
             excluir = st.checkbox("X Remover este planejamento deste relatorio", key=f"planning_excluir_{idx}")
             c1, c2 = st.columns([1, 1])
             with c1:
-                processo = st.text_input("Processo/assunto", key=f"planning_processo_{idx}")
-                prioridade = st.selectbox("Prioridade", PRIORIDADES, key=f"planning_prioridade_{idx}")
+                processo = st.text_input("Processo/assunto", key=f"planning_processo_{idx}", on_change=protect_done_rows)
+                prioridade = st.selectbox("Prioridade", PRIORIDADES, key=f"planning_prioridade_{idx}", on_change=protect_done_rows)
             with c2:
-                descricao = st.text_area("Descricao resumida", key=f"planning_descricao_{idx}", height=80)
-                render_status("planning", idx)
+                descricao = st.text_area("Descricao resumida", key=f"planning_descricao_{idx}", height=80, on_change=protect_done_rows)
+                render_status("planning", idx, on_change=protect_done_rows)
         if not excluir:
             rows.append({"processo": processo.strip(), "descricao": descricao.strip(), "prioridade": prioridade, "status": status_value("planning", idx)})
     if st.button("Adicionar planejamento"):
-        save_draft(current_draft())
-        st.session_state.planning_count += 1
-        st.rerun()
+        add_line_and_reload("planning_count", "Planejamento salvo e nova linha aberta.")
     render_removed_items("planning", "Planejamento", st.session_state.planning_count)
     return clean(rows)
 
@@ -453,12 +703,12 @@ def render_extra():
             excluir = st.checkbox("X Remover esta demanda deste relatorio", key=f"extra_excluir_{idx}")
             c1, c2 = st.columns([1, 1])
             with c1:
-                processo = st.text_input("Processo/assunto", key=f"extra_processo_{idx}")
-                prazo = st.text_input("Prazo solicitado", key=f"extra_prazo_{idx}")
-                prioridade = st.selectbox("Prioridade", PRIORIDADES, key=f"extra_prioridade_{idx}")
+                processo = st.text_input("Processo/assunto", key=f"extra_processo_{idx}", on_change=protect_done_rows)
+                prazo = st.text_input("Prazo solicitado", key=f"extra_prazo_{idx}", on_change=protect_done_rows)
+                prioridade = st.selectbox("Prioridade", PRIORIDADES, key=f"extra_prioridade_{idx}", on_change=protect_done_rows)
             with c2:
-                descricao = st.text_area("Descricao resumida", key=f"extra_descricao_{idx}", height=80)
-                render_status("extra", idx)
+                descricao = st.text_area("Descricao resumida", key=f"extra_descricao_{idx}", height=80, on_change=protect_done_rows)
+                render_status("extra", idx, on_change=protect_done_rows)
         if not excluir:
             rows.append(
                 {
@@ -470,9 +720,7 @@ def render_extra():
                 }
             )
     if st.button("Adicionar demanda extraordinaria"):
-        save_draft(current_draft())
-        st.session_state.extra_count += 1
-        st.rerun()
+        add_line_and_reload("extra_count", "Demandas salvas e nova linha aberta.")
     render_removed_items("extra", "Demanda extraordinaria", st.session_state.extra_count)
     return clean(rows)
 
@@ -510,31 +758,22 @@ def apply_done_prefill(new_rows):
         )
         existing_processos.add(processo.lower())
 
-    st.session_state.done_count = max(2, len(merged_rows))
-    clear_item_fields("done")
-
-    for idx, row in enumerate(merged_rows):
-        st.session_state[f"done_excluir_{idx}"] = False
-        st.session_state[f"done_origem_{idx}"] = ""
-        st.session_state[f"done_livre_{idx}"] = row.get("processo", "")
-        st.session_state[f"done_atividade_{idx}"] = row.get("atividade", "")
-        st.session_state[f"done_tempo_{idx}"] = row.get("tempo", "")
-        set_status("done", idx, row.get("status", "Em andamento"))
-        st.session_state[f"done_obs_{idx}"] = row.get("observacoes", "")
+    write_done_rows(merged_rows)
+    remember_done_rows()
 
 
 def render_done(planning_rows, extra_rows):
     st.subheader("Atividades executadas")
+    restore_done_rows_if_needed()
     options = [""] + demand_options(planning_rows, extra_rows)
 
     if st.button("Puxar planejamento e demandas para executadas"):
-        save_draft(current_draft())
         rows = []
         for row in planning_rows + extra_rows:
             if row.get("processo"):
                 rows.append({"processo": row["processo"], "atividade": row.get("descricao", ""), "status": "Em andamento"})
         apply_done_prefill(rows)
-        st.rerun()
+        save_and_reload(current_draft(), "Demandas adicionadas sem apagar atividades executadas.")
 
     rows = []
     for idx in range(st.session_state.done_count):
@@ -565,13 +804,13 @@ def render_done(planning_rows, extra_rows):
                 }
             )
     if st.button("Adicionar atividade executada"):
-        save_draft(current_draft())
-        st.session_state.done_count += 1
-        st.rerun()
+        add_line_and_reload("done_count", "Atividades salvas e nova linha aberta.")
     render_removed_items("done", "Atividade executada", st.session_state.done_count)
     return clean(rows)
 
 
+inject_design()
+render_header()
 init_state()
 render_draft_actions()
 
