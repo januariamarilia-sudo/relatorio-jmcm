@@ -1091,8 +1091,10 @@ def demand_options(planning_rows, extra_rows):
     return options
 
 
-def apply_done_prefill(new_rows):
+def apply_done_prefill(new_rows, current_rows=None):
     existing_rows = done_rows_from_state()
+    if not existing_rows and current_rows:
+        existing_rows = list(current_rows)
     existing_pairs = {
         (
             row.get("processo", "").strip().lower(),
@@ -1162,7 +1164,7 @@ def render_done(planning_rows, extra_rows):
         for row in planning_rows + extra_rows:
             if row.get("processo") or row.get("descricao"):
                 prefill_rows.append({"processo": row.get("processo", ""), "atividade": row.get("descricao", ""), "status": "Em andamento"})
-        apply_done_prefill(prefill_rows)
+        apply_done_prefill(prefill_rows, rows)
         save_and_reload(current_draft(), "Demandas acrescentadas sem apagar as atividades existentes.")
     if st.button("Adicionar atividade executada"):
         add_line_and_reload("done_count", "Atividades salvas e nova linha aberta.")
