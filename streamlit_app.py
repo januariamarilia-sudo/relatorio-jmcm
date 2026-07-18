@@ -1129,14 +1129,6 @@ def render_done(planning_rows, extra_rows):
     restore_done_rows_if_needed()
     options = [""] + demand_options(planning_rows, extra_rows)
 
-    if st.button("Puxar planejamento e demandas para executadas"):
-        rows = []
-        for row in planning_rows + extra_rows:
-            if row.get("processo"):
-                rows.append({"processo": row["processo"], "atividade": row.get("descricao", ""), "status": "Em andamento"})
-        apply_done_prefill(rows)
-        save_and_reload(current_draft(), "Demandas acrescentadas sem apagar as atividades existentes.")
-
     rows = []
     for idx in range(st.session_state.done_count):
         ensure_done_row(idx)
@@ -1165,6 +1157,13 @@ def render_done(planning_rows, extra_rows):
                     "observacoes": obs.strip(),
                 }
             )
+    if st.button("Puxar planejamento e demandas para executadas", use_container_width=True):
+        prefill_rows = []
+        for row in planning_rows + extra_rows:
+            if row.get("processo") or row.get("descricao"):
+                prefill_rows.append({"processo": row.get("processo", ""), "atividade": row.get("descricao", ""), "status": "Em andamento"})
+        apply_done_prefill(prefill_rows)
+        save_and_reload(current_draft(), "Demandas acrescentadas sem apagar as atividades existentes.")
     if st.button("Adicionar atividade executada"):
         add_line_and_reload("done_count", "Atividades salvas e nova linha aberta.")
     render_removed_items("done", "Atividade executada", st.session_state.done_count)
