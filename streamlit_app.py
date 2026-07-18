@@ -1,7 +1,11 @@
 from __future__ import annotations
 
+import csv
 import json
+import re
+import unicodedata
 from datetime import datetime
+from io import StringIO
 from pathlib import Path
 from urllib.error import HTTPError, URLError
 from urllib.parse import quote
@@ -647,6 +651,141 @@ def save_draft(draft, data_relatorio=None):
     return draft
 
 
+def normalize_lookup(value):
+    text = unicodedata.normalize("NFD", text_value(value))
+    text = "".join(ch for ch in text if unicodedata.category(ch) != "Mn")
+    return " ".join(text.lower().split())
+
+
+def first_report_date(value):
+    match = re.search(r"\d{2}/\d{2}/\d{4}", text_value(value))
+    if not match:
+        return datetime.max
+    try:
+        return datetime.strptime(match.group(0), "%d/%m/%Y")
+    except ValueError:
+        return datetime.max
+
+
+def load_local_report_rows():
+    if not LOCAL_SAVE_DIR.exists():
+        return []
+    rows = []
+    for path in LOCAL_SAVE_DIR.glob("*.json"):
+        try:
+            draft = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        if not isinstance(draft, dict):
+            continue
+        data_relatorio = report_date_key(draft.get("identity", {}).get("data", ""))
+        rows.append(
+            {
+                "data_relatorio": data_relatorio,
+                "conteudo_json": draft,
+                "atualizado_em": draft.get("saved_at", ""),
+            }
+        )
+    return rows
+
+
+def load_saved_report_rows():
+    try:
+        rows = supabase_request(
+            "GET",
+            "relatorios?select=data_relatorio,conteudo_json,atualizado_em&order=data_relatorio.asc&limit=1000",
+        )
+    except (HTTPError, URLError, TimeoutError, RuntimeError, json.JSONDecodeError, OSError):
+        rows = load_local_report_rows()
+    return rows if isinstance(rows, list) else []
+
+
+def build_activity_history(query, show_all=False):
+    query_norm = normalize_lookup(query)
+    if not query_norm and not show_all:
+        return []
+
+    entries = []
+    current_prefix = f"{DRAFT_CODE}:"
+    for record in load_saved_report_rows():
+        data_key = text_value(record.get("data_relatorio", ""))
+        if not data_key.startswith(current_prefix):
+            continue
+        draft = record.get("conteudo_json", {})
+        if not isinstance(draft, dict):
+            continue
+        data = text_value(draft.get("identity", {}).get("data", ""))
+        if not data and ":" in data_key:
+            data = data_key.split(":", 1)[1]
+
+        for row in draft.get("done", []) or []:
+            if not isinstance(row, dict):
+                continue
+            processo = text_value(row.get("processo", "")).strip()
+            atividade = text_value(row.get("atividade", "")).strip()
+            tempo = text_value(row.get("tempo", "")).strip()
+            status = text_value(row.get("status", "")).strip()
+            observacoes = text_value(row.get("observacoes", "")).strip()
+            if not any((processo, atividade, tempo, status, observacoes)):
+                continue
+
+            searchable = normalize_lookup(" ".join([processo, atividade, observacoes, status]))
+            if query_norm and query_norm not in searchable:
+                continue
+
+            entries.append(
+                {
+                    "Data": data,
+                    "Processo/assunto": processo,
+                    "Atividade executada": atividade,
+                    "Tempo": tempo,
+                    "Status": status,
+                    "Observacoes": observacoes,
+                }
+            )
+
+    entries.sort(key=lambda row: (first_report_date(row["Data"]), normalize_lookup(row["Processo/assunto"])))
+    return entries
+
+
+def history_csv(rows):
+    output = StringIO()
+    fieldnames = ["Data", "Processo/assunto", "Atividade executada", "Tempo", "Status", "Observacoes"]
+    writer = csv.DictWriter(output, fieldnames=fieldnames, delimiter=";")
+    writer.writeheader()
+    for row in rows:
+        writer.writerow({name: row.get(name, "") for name in fieldnames})
+    return output.getvalue().encode("utf-8-sig")
+
+
+def render_consolidated_control():
+    with st.expander("Controle consolidado de atividades", expanded=False):
+        with st.form("historico_atividades_form"):
+            busca = st.text_input("Buscar processo/assunto", key="history_query", placeholder="Ex.: PL 40/2026")
+            mostrar_todas = st.checkbox("Mostrar todas as atividades executadas", key="history_show_all")
+            submitted = st.form_submit_button("Buscar atividades", use_container_width=True)
+
+        if submitted:
+            st.session_state["history_results"] = build_activity_history(busca, mostrar_todas)
+            st.session_state["history_searched"] = True
+
+        if st.session_state.get("history_searched"):
+            resultados = st.session_state.get("history_results", [])
+            if resultados:
+                datas = {row["Data"] for row in resultados if row.get("Data")}
+                st.success(f"{len(resultados)} atividade(s) encontrada(s) em {len(datas)} data(s).")
+                st.dataframe(resultados, use_container_width=True, hide_index=True)
+                st.download_button(
+                    "Baixar controle em CSV",
+                    data=history_csv(resultados),
+                    file_name="controle_consolidado_atividades.csv",
+                    mime="text/csv",
+                    use_container_width=True,
+                )
+            else:
+                st.warning("Nenhuma atividade encontrada para esta busca.")
+
+
 def clear_item_fields(prefix):
     keys = [key for key in st.session_state if key.startswith(f"{prefix}_")]
     for key in keys:
@@ -1178,6 +1317,7 @@ render_profile_links()
 render_iphone_mode_hint()
 init_state()
 render_draft_actions()
+render_consolidated_control()
 
 st.subheader("Identificacao")
 c1, c2, c3 = st.columns(3)
